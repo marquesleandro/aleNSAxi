@@ -32,8 +32,8 @@ print '''
                  COPYRIGHT                    
  ===========================================
  Simulator: %s
- created by Leandro Marques at 02/2021
- e-mail: marquesleandro67@gmail.com
+ created by Leandro Marques at 06/2023
+ e-mail: leandro.marques@mecanica.coppe.ufrj.br
  COPPE/Departament of Mechanical Engineering
  Federal University of the Rio de Janeiro
  ===========================================
