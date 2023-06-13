@@ -150,7 +150,7 @@ print ' ------------'
 
 solution_start_time = time()
 
-start_time = time()
+import_mesh_start_time = time()
 
 # Linear and Mini Elements
 if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
@@ -158,13 +158,14 @@ if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
  #mshFileName = 'linearStraightGeo.msh'
  #mshFileName = 'poiseuille.msh'
  #mshFileName = 'poiseuilleV2.msh'
- mshFileName = 'mesh5.msh'
- #mshFileName = 'CurvedGeoStrut.msh'
+ #mshFileName = 'mesh5.msh'
+ mshFileName = 'CurvedGeoStrut.msh'
 
  pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
   sys.exit()
 
+ #Linear Element
  if polynomial_option == 0 or polynomial_option == 1:
   mesh = importMSH.Linear2D(pathMSHFile, mshFileName)
 
@@ -189,6 +190,7 @@ if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
   dt = float(CFL*minLengthMesh)
   #dt = 0.1   #SL 
 
+ #Mini Element
  elif polynomial_option == 2:
   mesh = importMSH.Mini2D(pathMSHFile, mshFileName)
 
@@ -208,13 +210,11 @@ if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
   velocityFreedomDegree       = mesh.velocityFreedomDegree
   pressureFreedomDegree       = mesh.pressureFreedomDegree
   numPhysical                 = mesh.numPhysical 
-  Re = 100.0
-  Sc = 1.0
+  Re = 54.5
+  Sc = 10.0
   CFL = 0.5
   dt = float(CFL*minLengthMesh)
   #dt = 0.01   #linear result ok 
-
-
 
 
 # Quad Element
@@ -230,8 +230,6 @@ elif polynomial_option == 3:
  #mshFileName = 'quad4.msh'
  #mshFileName = 'quad5.msh'
 
-
- 
  pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
   sys.exit()
@@ -277,8 +275,8 @@ elif polynomial_option == 4:
 
 
 
-end_time = time()
-import_mesh_time = end_time - start_time
+import_mesh_end_time = time()
+import_mesh_time = import_mesh_end_time - import_mesh_start_time
 print ' time duration: %.1f seconds \n' %import_mesh_time
 
 
@@ -288,7 +286,7 @@ print ' ASSEMBLY:'
 print ' ---------'
 
 
-start_time = time()
+assembly_start_time = time()
 
 Kxxr, Kxyr, Kyxr, Kyyr, Kr, M2r, Mr, M, MrLump, Gx, Gy, Gxr, Gyr, M1, polynomial_order = assembly.AxiNS2D(simulation_option, polynomial_option, velocityFreedomDegree, pressureFreedomDegree, numNodes, numVerts, numElements, IEN, x, y, gausspoints)
 
@@ -339,8 +337,8 @@ concentrationLHS = (np.copy(Mr)/dt) + (1.0/(Re*Sc))*np.copy(Kxxr) + (1.0/(Re*Sc)
 #concentrationLHS = np.array(concentrationLHS, dtype = float)
 
 
-end_time = time()
-assembly_time = end_time - start_time
+assembly_end_time = time()
+assembly_time = assembly_end_time - assembly_start_time
 print ' time duration: %.1f seconds \n' %assembly_time
 
 
@@ -351,7 +349,7 @@ print ' --------------------------------'
 print ' INITIAL AND BOUNDARY CONDITIONS:'
 print ' --------------------------------'
 
-start_time = time()
+bc_apply_start_time = time()
 
 
 # ------------------------ Boundaries Conditions ----------------------------------
@@ -426,35 +424,27 @@ elif polynomial_option == 3:
 
 
 
-# -------------------------- Import VTK File ------------------------------------
+# -------------------------- Import VTK File - Initial Condition ------------------------------------
 if import_option == 0:
  import_option = 'OFF'
  
- # -------------------------- Initial condition ------------------------------------
  vx = np.copy(xVelocityBC.aux1BC)
  vy = np.copy(yVelocityBC.aux1BC)
  p = np.copy(pressureBC.aux1BC)
  c = np.copy(concentrationBC.aux1BC)
  sol = np.concatenate((vx, vy, p), axis=0)
- # ---------------------------------------------------------------------------------
- 
- end_time = time()
- bc_apply_time = end_time - start_time
- print ' time duration: %.1f seconds \n' %bc_apply_time
- #----------------------------------------------------------------------------------
- 
- 
 
 elif import_option == 1:
  import_option = 'ON'
  
  vx, vy, c, p, p, benchmark_problem = importVTK.vtkFile("/home/marquesleandro/NSAxi/results/" + folderName + "/" + folderName + str(numberStep) + ".vtk", numNodes, numVerts, numElements, IEN, polynomial_option)
  sol = np.concatenate((vx, vy, p), axis=0)
-
- end_time = time()
- bc_apply_time = end_time - start_time 
- print ' time duration: %.1f seconds \n' %bc_apply_time
 #----------------------------------------------------------------------------------
+
+
+bc_apply_end_time = time()
+bc_apply_time = bc_apply_end_time - bc_apply_start_time 
+print ' time duration: %.1f seconds \n' %bc_apply_time
 
 
 
@@ -556,6 +546,9 @@ for t in tqdm(range(1, nt)):
  
  
   # ------------------------- ALE Scheme --------------------------------------------
+
+  ALE_start_time = time()
+
   if description_option == 1:
    xmeshALE_dif = np.linalg.norm(x-x_old)
    ymeshALE_dif = np.linalg.norm(y-y_old)
@@ -567,9 +560,6 @@ for t in tqdm(range(1, nt)):
     print ' ------------'
     print ' MESH UPDATE:'
     print ' ------------'
-   
-   
-    start_time = time()
    
    
     vxLaplacianSmooth, vyLaplacianSmooth = ALE.Laplacian_smoothing(neighborsNodesALE, numNodes, numVerts, x, y, dt)
@@ -608,8 +598,8 @@ for t in tqdm(range(1, nt)):
     vxALE = vx - vxMesh
     vyALE = vy - vyMesh
    
-    end_time = time()
-    ALE_time_solver = end_time - start_time
+    ALE_end_time = time()
+    ALE_time_solver = ALE_end_time - ALE_start_time
     print ' time duration: %.1f seconds' %ALE_time_solver
     # ---------------------------------------------------------------------------------
    
@@ -762,8 +752,8 @@ for t in tqdm(range(1, nt)):
    vxALE = vx - vxMesh
    vyALE = vy - vyMesh
 
-   end_time = time()
-   ALE_time_solver = end_time - start_time
+   ALE_end_time = time()
+   ALE_time_solver = ALE_end_time - ALE_start_time
    print ' time duration: %.1f seconds' %ALE_time_solver
  
   # ---------------------------------------------------------------------------------
