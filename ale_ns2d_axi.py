@@ -158,7 +158,7 @@ if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
  #mshFileName = 'linearStraightGeo.msh'
  #mshFileName = 'poiseuille.msh'
  #mshFileName = 'poiseuilleV2.msh'
- mshFileName = 'mesh4.msh'
+ mshFileName = 'mesh5.msh'
  #mshFileName = 'CurvedGeoStrut.msh'
 
  pathMSHFile = searchMSH.Find(mshFileName)

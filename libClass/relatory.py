@@ -64,7 +64,6 @@ def export(_save_path, _directory_name, _simulator_name, _benchmark_problem, _de
 
 
  today = datetime.datetime.now()
- relatory.write( '{0}%'.format(import_mesh_performance))
  relatory.write('                                 COPYRIGHT                                 \n')
  relatory.write(' ========================================================================== \n')
  relatory.write(' This relatory was created by Leandro Marques at ' + str(today) + '\n')
