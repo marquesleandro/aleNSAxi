@@ -557,8 +557,8 @@ def AxiNS2D(_simulation_option, _polynomial_option, _velocityFD, _pressureFD, _n
    polynomial_order = 'Mini Element'
  
    for e in tqdm(range(0, _numElements)):
-    #element2D.mini(e)         # gaussian quadrature
-    element2D.analyticMini(e)  # analytic elementary matrix
+    element2D.mini(e)         # gaussian quadrature
+    #element2D.analyticMini(e)  # analytic elementary matrix
 
     v1 = _IEN[e][0]
     v2 = _IEN[e][1]

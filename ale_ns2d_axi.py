@@ -147,6 +147,9 @@ print '\n ------------'
 print ' IMPORT MESH:'
 print ' ------------'
 
+
+solution_start_time = time()
+
 start_time = time()
 
 # Linear and Mini Elements
@@ -488,7 +491,6 @@ print ' Saving simulation in %s \n' %folderResults
 
 
 
-solution_start_time = time()
 os.chdir(initial_path)
 
 
@@ -679,6 +681,8 @@ for t in tqdm(range(1, nt)):
     print ' INITIAL AND BOUNDARY CONDITIONS:'
     print ' --------------------------------'
  
+    start_BC_time = time()
+
     # Linear and Mini Elements
     if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
     
@@ -745,12 +749,23 @@ for t in tqdm(range(1, nt)):
      concentrationBC = benchmarkProblems.quadStent(numPhysical,numNodes,x,y)
      concentrationBC.concentrationCondition(boundaryEdges,concentrationLHS0,neighborsNodes)
 
+
+    end_BC_time = time()
+    bc_apply_time = end_BC_time - start_BC_time
+    print ' time duration: %.1f seconds \n' %bc_apply_time
+
   elif description_option == 2:
+   start_time = time()
    vxMesh = 0.0*vx
    vyMesh = 0.0*vy
 
    vxALE = vx - vxMesh
    vyALE = vy - vyMesh
+
+   end_time = time()
+   ALE_time_solver = end_time - start_time
+   print ' time duration: %.1f seconds' %ALE_time_solver
+ 
   # ---------------------------------------------------------------------------------
    
    
@@ -933,7 +948,10 @@ for t in tqdm(range(1, nt)):
   end_type = 3
   break 
 
-
+ # used to calculate code performance
+ if t == 1: 
+  end_first_loop_time = time()
+  first_loop_time = end_first_loop_time - solution_start_time
 
 
 end_time = time()
@@ -969,7 +987,7 @@ elif end_type == 3:
 
 
 # -------------------------------- Export Relatory ---------------------------------------
-relatory.export(save.path, folderResults, sys.argv[0], benchmark_problem, description_name, scheme_name, mshFileName, numNodes, numElements, minLengthMesh, dt, numIteration, Re, Sc, import_mesh_time, assembly_time, bc_apply_time, solution_time, polynomial_order, gausspoints, observation)
+relatory.export(save.path, folderResults, sys.argv[0], benchmark_problem, description_name, scheme_name, mshFileName, numNodes, numElements, minLengthMesh, dt, numIteration, Re, Sc, import_mesh_time, assembly_time, bc_apply_time, ALE_time_solver, SL_time, solver_time, first_loop_time, solution_time, polynomial_order, gausspoints, observation)
 # ----------------------------------------------------------------------------------------
 
 
