@@ -159,6 +159,7 @@ def Laplacian_smoothing_avg(_neighbors_nodes, _npoints, _x, _y, _dt):
  return vx_laplaciansmooth, vy_laplaciansmooth
 
 
+
 def MINILaplacian_smoothing(_neighbors_nodes, _npoints, _nverts, _nelem, _IEN, _x, _y, _dt):
  vx_laplaciansmooth = np.zeros([_npoints,1], dtype = float)
  vy_laplaciansmooth = np.zeros([_npoints,1], dtype = float)

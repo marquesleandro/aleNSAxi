@@ -81,7 +81,11 @@ else:
 print' ----------------------------------------------------------------------------\n'
 
 
-
+print ' ----------------------------------------------------------------------------'
+print ' (0) - Boundary Moving OFF'
+print ' (1) - Boundary Moving ON'
+boundary_moving_option = int(raw_input("\n enter option above: "))
+print' ----------------------------------------------------------------------------\n'
 
 
 print ' ----------------------------------------------------------------------------'
@@ -137,7 +141,7 @@ if simulation_option == 1:
 
 elif simulation_option == 0:
  gausspoints = 3
- nt = 3
+ nt = 20
  folderResults  = 'deletar'
  observation = 'debug'
 
@@ -272,7 +276,6 @@ elif polynomial_option == 4:
  mesh = importMSH.Cubic2D(pathMSHFile, mshFileName, equation_number)
  mesh.coord()
  mesh.ien()
-
 
 
 import_mesh_end_time = time()
@@ -542,8 +545,29 @@ for t in tqdm(range(1, nt)):
   print ' Number of time iteration: %s' %numIteration
   print ' Reynolds number: %s' %Re
   print ' Schmidt number: %s' %Sc
+
+
  
+  # ------------------------- Boundary Moving ------------------------------------
+
+  if boundary_moving_option == 1:
+   y_boundary = np.zeros([numNodes,1], dtype = float)
  
+   for i in range(0,len(boundaryEdges)):
+    line = boundaryEdges[i][0]
+    v1 = boundaryEdges[i][1] - 1
+    v2 = boundaryEdges[i][2] - 1
+  
+    # oscillatory parameters ok
+    # center point x=5.3
+    if line == 1 or line == 5:
+     y_boundary[v1] = 2.0*0.01*np.sin((2.0*np.pi/7.0)*x[v1])*np.cos((2.0*np.pi/32.0)*t)
+     y_boundary[v2] = 2.0*0.01*np.sin((2.0*np.pi/7.0)*x[v2])*np.cos((2.0*np.pi/32.0)*t)
+  
+   y = y + y_boundary
+  # --------------------------------------------------------------------------------
+ 
+
  
   # ------------------------- ALE Scheme --------------------------------------------
 
@@ -564,7 +588,7 @@ for t in tqdm(range(1, nt)):
    
     vxLaplacianSmooth, vyLaplacianSmooth = ALE.Laplacian_smoothing(neighborsNodesALE, numNodes, numVerts, x, y, dt)
     #vxLaplacianSmooth, vyLaplacianSmooth = ALE.MINILaplacian_smoothing(neighborsNodesALE, numNodes, numVerts, numElements, IEN, x, y, dt)
-    #vxLaplacianSmooth, vyLaplacianSmooth = ALE.Laplacian_smoothing_avg(neighborsNodesALE, numNodes, x, y, dt)
+    #vxLaplacianSmooth, vyLaplacianSmooth = ALE.Laplacian_smoothing_avg(neighborsNodesALE, numNodes, numVerts, x, y, dt)
     vxVelocitySmooth,  vyVelocitySmooth  = ALE.Velocity_smoothing(neighborsNodes, numNodes, vx, vy)
   
     vxMesh = kLagrangian*vx + kLaplacian*vxLaplacianSmooth + kVelocity*vxVelocitySmooth
@@ -801,72 +825,78 @@ for t in tqdm(range(1, nt)):
 
   #---------- Step 1 - Solve the continuity and momentum equation ----------------------
   start_solver_time = time()
+  start_ns_time = time()
 
-  AA = np.copy(M2r.todense()/dt)
-  b = np.dot(AA,np.concatenate((vx_d,vy_d),axis=0))
-  #b = np.dot(M/dt,np.concatenate((vx,vy),axis=0))  #stokes
-  bp = np.zeros([numVerts,1], dtype = float)
-  b = np.concatenate((b,bp),axis=0)
-
-  for i in xVelocityBC.dirichletNodes:
-   b[i] = xVelocityBC.aux1BC[i]
-
-  for i in yVelocityBC.dirichletNodes:
-   b[i + numNodes] = yVelocityBC.aux1BC[i]
-
-  for i in pressureBC.dirichletNodes:
-   b[i + 2*numNodes] = pressureBC.aux1BC[i]
-
-  sol = scipy.sparse.linalg.spsolve(A.tocsr(),b)
-  #sol = scipy.sparse.linalg.cg(A,b, sol, maxiter=1.0e+03, tol=1.0e-04)
-  #sol = sol[0].reshape((len(sol[0]),1))
-
-  vx = np.reshape(np.array(sol[0:numNodes]),(len(vx),1))
-  vy = np.reshape(np.array(sol[numNodes:2*numNodes]),(len(vy),1))
-  p  = np.reshape(np.array(sol[2*numNodes:]),(len(p),1))
-
+#  AA = np.copy(M2r.todense()/dt)
+#  b = np.dot(AA,np.concatenate((vx_d,vy_d),axis=0))
+#  #b = np.dot(M/dt,np.concatenate((vx,vy),axis=0))  #stokes
+#  bp = np.zeros([numVerts,1], dtype = float)
+#  b = np.concatenate((b,bp),axis=0)
+#
+#  for i in xVelocityBC.dirichletNodes:
+#   b[i] = xVelocityBC.aux1BC[i]
+#
+#  for i in yVelocityBC.dirichletNodes:
+#   b[i + numNodes] = yVelocityBC.aux1BC[i]
+#
+#  for i in pressureBC.dirichletNodes:
+#   b[i + 2*numNodes] = pressureBC.aux1BC[i]
+#
+#  sol = scipy.sparse.linalg.spsolve(A.tocsr(),b)
+#  #sol = scipy.sparse.linalg.cg(A,b, sol, maxiter=1.0e+03, tol=1.0e-04)
+#  #sol = sol[0].reshape((len(sol[0]),1))
+#
+#  vx = np.reshape(np.array(sol[0:numNodes]),(len(vx),1))
+#  vy = np.reshape(np.array(sol[numNodes:2*numNodes]),(len(vy),1))
+#  p  = np.reshape(np.array(sol[2*numNodes:]),(len(p),1))
+#
+#  end_ns_time = time()
+#  ns_time = end_ns_time - start_ns_time
+#  print ' Solver Continuity and Momentum Equation: %.1f seconds' %ns_time
+#  #----------------------------------------------------------------------------------
+# 
+# 
+#
+#  #---------- Step 2 - Solve the specie transport equation ----------------------
+#  start_concentrationsolver_time = time()
+#
+#  c_old = np.copy(c)
+#  # Taylor Galerkin Scheme
+#  if scheme_option == 1:
+#   A = np.copy(M)/dt 
+#   concentrationRHS = sps.lil_matrix.dot(A,c) - np.multiply(vx,sps.lil_matrix.dot(Gx,c))\
+#         - np.multiply(vy,sps.lil_matrix.dot(Gy,c))\
+#         - (dt/2.0)*np.multiply(vx,(np.multiply(vx,sps.lil_matrix.dot(Kxx,c)) + np.multiply(vy,sps.lil_matrix.dot(Kyx,c))))\
+#         - (dt/2.0)*np.multiply(vy,(np.multiply(vx,sps.lil_matrix.dot(Kxy,c)) + np.multiply(vy,sps.lil_matrix.dot(Kyy,c))))
+#   concentrationRHS = np.multiply(concentrationRHS,concentrationBC.aux2BC)
+#   concentrationRHS = concentrationRHS + concentrationBC.dirichletVector
+#   c = scipy.sparse.linalg.cg(concentrationBC.LHS,concentrationRHS,c, maxiter=1.0e+05, tol=1.0e-05)
+#   c = c[0].reshape((len(c[0]),1))
+# 
+# 
+# 
+#  # Semi-Lagrangian Scheme
+#  elif scheme_option == 2:
+#   concentrationRHS = np.dot(Mr.todense()/dt,c_d)
+# 
+#   for i in concentrationBC.dirichletNodes:
+#    concentrationRHS[i] = concentrationBC.aux1BC[i]
+#
+#   c = scipy.sparse.linalg.spsolve(concentrationLHS.tocsr(),concentrationRHS)
+#   #c = scipy.sparse.linalg.cg(concentrationLHS,concentrationRHS, c, maxiter=1.0e+05, tol=1.0e-05)
+#   #c = c[0].reshape((len(c[0]),1))
+#
+#
+#
+#
+#  end_concentrationsolver_time = time()
+#  concentrationsolver_time = end_concentrationsolver_time - start_concentrationsolver_time
+#  print ' Concentration Solver: %.1f seconds' %concentrationsolver_time
+#
+#
+#
   end_solver_time = time()
   solver_time = end_solver_time - start_solver_time
-  print ' Solver Continuity and Momentum Equation: %.1f seconds' %solver_time
-  #----------------------------------------------------------------------------------
- 
- 
-
-  #---------- Step 2 - Solve the specie transport equation ----------------------
-  start_concentrationsolver_time = time()
-
-  c_old = np.copy(c)
-  # Taylor Galerkin Scheme
-  if scheme_option == 1:
-   A = np.copy(M)/dt 
-   concentrationRHS = sps.lil_matrix.dot(A,c) - np.multiply(vx,sps.lil_matrix.dot(Gx,c))\
-         - np.multiply(vy,sps.lil_matrix.dot(Gy,c))\
-         - (dt/2.0)*np.multiply(vx,(np.multiply(vx,sps.lil_matrix.dot(Kxx,c)) + np.multiply(vy,sps.lil_matrix.dot(Kyx,c))))\
-         - (dt/2.0)*np.multiply(vy,(np.multiply(vx,sps.lil_matrix.dot(Kxy,c)) + np.multiply(vy,sps.lil_matrix.dot(Kyy,c))))
-   concentrationRHS = np.multiply(concentrationRHS,concentrationBC.aux2BC)
-   concentrationRHS = concentrationRHS + concentrationBC.dirichletVector
-   c = scipy.sparse.linalg.cg(concentrationBC.LHS,concentrationRHS,c, maxiter=1.0e+05, tol=1.0e-05)
-   c = c[0].reshape((len(c[0]),1))
- 
- 
- 
-  # Semi-Lagrangian Scheme
-  elif scheme_option == 2:
-   concentrationRHS = np.dot(Mr.todense()/dt,c_d)
- 
-   for i in concentrationBC.dirichletNodes:
-    concentrationRHS[i] = concentrationBC.aux1BC[i]
-
-   c = scipy.sparse.linalg.spsolve(concentrationLHS.tocsr(),concentrationRHS)
-   #c = scipy.sparse.linalg.cg(concentrationLHS,concentrationRHS, c, maxiter=1.0e+05, tol=1.0e-05)
-   #c = c[0].reshape((len(c[0]),1))
-
-
-
-
-  end_concentrationsolver_time = time()
-  concentrationsolver_time = end_concentrationsolver_time - start_concentrationsolver_time
-  print ' Concentration Solver: %.1f seconds' %concentrationsolver_time
   #----------------------------------------------------------------------------------
  
 
