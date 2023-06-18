@@ -162,8 +162,9 @@ if polynomial_option == 0 or polynomial_option == 1 or polynomial_option == 2:
  #mshFileName = 'linearStraightGeo.msh'
  #mshFileName = 'poiseuille.msh'
  #mshFileName = 'poiseuilleV2.msh'
- #mshFileName = 'mesh5.msh'
+ #mshFileName = 'mesh4.msh'
  mshFileName = 'CurvedGeoStrut.msh'
+ #mshFileName = 'RealGeoStrut.msh'
 
  pathMSHFile = searchMSH.Find(mshFileName)
  if pathMSHFile == 'File not found':
@@ -552,18 +553,19 @@ for t in tqdm(range(1, nt)):
 
   if boundary_moving_option == 1:
    y_boundary = np.zeros([numNodes,1], dtype = float)
+   Amplitude = 0.005
+   frequency_space = 2.0*np.pi/7.0
+   frequency_time = 2.0*np.pi/16.0
  
    for i in range(0,len(boundaryEdges)):
     line = boundaryEdges[i][0]
     v1 = boundaryEdges[i][1] - 1
     v2 = boundaryEdges[i][2] - 1
   
-    # oscillatory parameters ok
-    # center point x=5.3
     if line == 1 or line == 5:
-     y_boundary[v1] = 2.0*0.01*np.sin((2.0*np.pi/7.0)*x[v1])*np.cos((2.0*np.pi/32.0)*t)
-     y_boundary[v2] = 2.0*0.01*np.sin((2.0*np.pi/7.0)*x[v2])*np.cos((2.0*np.pi/32.0)*t)
-  
+     y_boundary[v1] = 2.0*Amplitude*np.sin(frequency_space*x[v1])*np.cos(frequency_time*t)
+     y_boundary[v2] = 2.0*Amplitude*np.sin(frequency_space*x[v2])*np.cos(frequency_time*t)
+
    y = y + y_boundary
   # --------------------------------------------------------------------------------
  

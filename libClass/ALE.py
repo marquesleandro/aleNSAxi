@@ -138,11 +138,11 @@ def Laplacian_smoothing(_neighbors_nodes, _npoints, _nverts, _x, _y, _dt):
  return vx_laplaciansmooth, vy_laplaciansmooth
 
 
-def Laplacian_smoothing_avg(_neighbors_nodes, _npoints, _x, _y, _dt):
+def Laplacian_smoothing_avg(_neighbors_nodes, _npoints, _nVerts, _x, _y, _dt):
  vx_laplaciansmooth = np.zeros([_npoints,1], dtype = float)
  vy_laplaciansmooth = np.zeros([_npoints,1], dtype = float)
 
- for i in range(0,_npoints):
+ for i in range(0,_nVerts):
   num_nghb = len(_neighbors_nodes[i])
   x_distance = 0.0
   y_distance = 0.0
